@@ -2,6 +2,10 @@
 --  Oracle date handling
 -- -----------------------------------------------------------------------------
 
+select  round(date '9999-01-01','CC')   as minimum_date,
+        trunc(date '-4712-1-1','CC')    as maximum_date
+from dual;
+
 
 -- Truncating dates ----------------
 select  trunc(sysdate,'YEAR')       as  start_of_year,
@@ -50,6 +54,31 @@ select  ((trunc(systimestamp) - to_date('19700101','yyyymmdd')) * 24 * 60 * 60 *
         (to_number(to_char(systimestamp,'sssss')) * 1000 + to_number(to_char(systimestamp,'ff3'))) 
 from    dual
 ;
+
+-- Show time difference between to dates ---------------------------------------
+select  evt_start,
+        evt_end,
+        evt_end - evt_start as evt_diff,
+        trunc((evt_end - evt_start) * 24)               as diff_hours,
+        mod(trunc((evt_end - evt_start) * 1440), 60)    as diff_minutes,
+        mod(trunc((evt_end - evt_start) * 86400), 60)   as diff_seconds
+from    (
+            select  to_date('2019.12.15 23:15:24','yyyy.mm.dd hh24:mi:ss') evt_start,
+                    to_date('2019.12.16 02:15:25','yyyy.mm.dd hh24:mi:ss') evt_end
+            from    dual
+        ); 
+
+select  evt_start,
+        evt_end,
+        evt_end - evt_start as evt_diff,
+        extract(hour from (evt_end - evt_start))        as diff_hours,
+        extract(minute from (evt_end - evt_start))      as diff_minutes,
+        extract(second from (evt_end - evt_start))      as diff_seconds
+from    (
+            select  cast(to_date('2019.12.15 23:15:24','yyyy.mm.dd hh24:mi:ss') as timestamp) evt_start,
+                    cast(to_date('2019.12.16 02:15:23','yyyy.mm.dd hh24:mi:ss') as timestamp) evt_end
+            from    dual
+        ); 
 
 
 
@@ -107,3 +136,8 @@ YYYY / SYYYY    4-digit year; S prefixes BC dates with a minus sign.
 YYY / YY / Y    Last 3, 2, or 1 digit(s) of year
 
 */
+
+
+select  to_date(,'J')
+from    dual
+;
