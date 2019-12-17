@@ -118,3 +118,58 @@ order   by  orun.orun_id;
 select  *
 from    s_organisation_units
 ;
+
+
+
+
+select  'exec dbms_stats.gather_table_stats(''BSI'', ''' || ob.object_name || ''');' as calc
+from    sys.all_objects         ob
+        left  join  sys.all_tables  tb  on  tb.owner = ob.owner and tb.table_name = ob.object_name
+        left  join  sys.all_views   vw  on  vw.owner = ob.owner and vw.view_name = ob.object_name
+        left  join  sys.all_indexes ix  on  ix.owner = ob.owner and ix.index_name = ob.object_name
+where   ob.object_type in ('TABLE') -- 'FUNCTION','INDEX','PACKAGE','PACKAGE BODY','PROCEDURE','SEQUENCE','TRIGGER')
+    and ob.owner like upper('%')
+    and ob.object_name like upper('bsi%customer%')
+order   by  ob.object_type,
+            ob.owner,
+            ob.object_name
+            
+            
+exec dbms_stats.gather_table_stats('BSI', 'BSI_BENEFIT_CUSTOMER');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_COURSE_CUSTOMER');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_COURSE_QUESTION_CUSTOMER');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_CUSTOMER');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_CUSTOMER_ADVISOR');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_CUSTOMER_ATTRIBUTE');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_CUSTOMER_CHANGE');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_CUSTOMER_CUSTOMER');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_CUSTOMER_CUSTOMER_ATTR');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_CUSTOMER_CUSTOMER_LIST');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_CUSTOMER_CUSTOMER_ROLE');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_CUSTOMER_FIGURE');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_CUSTOMER_IMPORT');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_CUSTOMER_INTEREST');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_CUSTOMER_INTEREST_HISTORY');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_CUSTOMER_LIST');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_CUSTOMER_SCORE');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_CUSTOMER_SEGMENTATION');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_CUSTOMER_TRA_RELATION');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_DATA_QUA_DUP_CUSTOMER');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_DISTRIBUTOR_CUSTOMER');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_IMPORT_CUSTOMER');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_UC_CUSTOMER');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_UC_CUSTOMER_GENDER');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_UC_CUSTOMER_ROLE');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_UC_CUSTOMER_ROLE_FIELD');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_UC_CUSTOMER_SEGMENTATION');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_UC_CUSTOMER_TABLE_PAGE');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_UC_DWH_REPORT_CUSTOMER');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_X_BAD_BP_CUSTOMER');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_X_BANKPRODUCT_CUSTOMER');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_X_CONTRACT_CUSTOMER');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_X_CUSTOMER_ACTIVITY');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_X_CUSTOMER_AR_CL_STATUS');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_X_CUSTOMER_PRIVAT_NOTES');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_X_S1_BP_CUSTOMER');
+exec dbms_stats.gather_table_stats('BSI', 'BSI_X_S2_BP_CUSTOMER');
+            
