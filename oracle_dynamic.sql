@@ -1,3 +1,6 @@
+
+
+
 /*
 
 Column Type Codes delivered by dbms_sql.desc_tab:
@@ -152,51 +155,4 @@ end;
 
 
 
-declare
-    l_table         varchar2(128)   := 'bsi_person';
-    l_col_name_len  number          := 0;
-    l_query         varchar2(32767) := 'select person_nr, person_no from bsi_person where rownum < 5';
-    l_cursor        integer default dbms_sql.open_cursor;
-    l_value         varchar2(4000);
-    l_status        integer;
-    l_desc_table    dbms_sql.desc_tab;
-    l_num_cols      number;
-    l_val_count     varchar2(128);
-    l_row_num       number;
-begin
-    dbms_output.put_line(' ');
-    dbms_output.put_line('Analyzing table ' || upper(l_table));
-    dbms_output.put_line(rpad('-',16+length(l_table),'-'));
-    select max(length(c.column_name)) into l_col_name_len from sys.all_tab_columns c where upper(c.table_name) = upper(l_table);
-    for r in (select c.column_id, c.column_name, c.data_type, c.data_length from sys.all_tab_columns c where upper(c.table_name) = upper(l_table)) loop
-        dbms_output.put_line(lpad(r.column_id,3,'0') || ' : ' || rpad(r.column_name, l_col_name_len, ' ') || ' (' || r.data_type || ')');
-        if r.data_type in ('CLOB','BLOB') then
-            dbms_output.put_line('Large Object --> No analysis!!');
-        else
-          --l_query := 'select * from (select coalesce(to_char(' || r.column_name || '),''<null>'') as value, count(*) as num_distinct from ' || l_table || ' group by ' || r.column_name || ' order by 2 desc) where rownum < 10'; 
-            l_query := 'select coalesce(to_char(' || r.column_name || '),''<null>'') as value, count(*) as num_distinct from ' || l_table || ' group by ' || r.column_name || ' order by 2 desc'; 
-            dbms_sql.parse(  l_cursor,  l_query, dbms_sql.native );
-            dbms_sql.describe_columns( l_cursor, l_num_cols, l_desc_table );
-            for i in 1 .. l_num_cols loop
-                dbms_sql.define_column(l_cursor, i, l_value, 4000);
-            end loop;
-            dbms_sql.define_column(l_cursor, 1, l_value, 4000);
-            dbms_sql.define_column(l_cursor, 2, l_val_count, 20);
-            l_status := dbms_sql.execute(l_cursor);
-            l_row_num := 0;
-            while ( dbms_sql.fetch_rows(l_cursor) > 0 ) loop
-                l_row_num := l_row_num + 1;
-                if l_row_num < 11 then
-                    dbms_sql.column_value( l_cursor, 1, l_value );
-                    dbms_sql.column_value( l_cursor, 2, l_val_count );
-                    dbms_output.put_line('      ' || lpad(l_val_count,8,' ') || ' : ' || l_value);
-                elsif l_row_num = 11 then
-                    dbms_output.put_line('                ...');
-                end if;
-            end loop;
-            dbms_output.put_line('                (' || l_row_num || ')');
-            dbms_output.put_line(' ');
-        end if;
-    end loop;
-end;
     
