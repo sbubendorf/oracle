@@ -2,49 +2,146 @@
 --  Oracle date handling
 -- -----------------------------------------------------------------------------
 
+-- Crate test table ------------------------------------------------------------
+
+drop table sbu_date;
+
+create table sbu_date
+(
+    id          number,
+    date_start  date,
+    date_end    date,
+    time_start  timestamp,
+    time_end    timestamp,
+    day_start   date,
+    day_end     date
+);
+
+-- Fill random date ranges into test table -------------------------------------
+
+truncate table sbu_date;
+    
+declare
+    l_time_max      date    := to_date('20190101','yyyymmdd');
+    l_time_from     date;
+    l_time_to       date;
+    --
+    function get_random_ts(i_range_from date, i_range_to date) 
+    return date
+    is
+    begin
+        return i_range_from + dbms_random.value(0,i_range_to-i_range_from);
+    end get_random_ts;
+begin
+    for i in 1..500 loop
+        l_time_from := get_random_ts(l_time_max, l_time_max+dbms_random.value(0,1));
+        l_time_to := get_random_ts(l_time_from, l_time_from+dbms_random.value(0,2));
+        l_time_max := l_time_to;
+        insert into sbu_date 
+            values(
+                i, 
+                l_time_from, 
+                l_time_to, 
+                cast(l_time_from as timestamp) + numtodsinterval(dbms_random.value(0,1), 'SECOND'), 
+                cast(l_time_to   as timestamp) + numtodsinterval(dbms_random.value(0,1), 'SECOND'),
+                trunc(l_time_from),
+                trunc(l_time_to) 
+            );
+    end loop;
+    commit;
+end;
+
+select  *
+from    sbu_date
+;
+
+
 select  round(date '9999-01-01','CC')   as minimum_date,
         trunc(date '-4712-1-1','CC')    as maximum_date
 from dual;
 
 
 -- Truncating dates ----------------
-select  trunc(sysdate,'YEAR')       as  start_of_year,
-        trunc(sysdate,'MONTH')      as  start_of_month
-from    dual
+select  d.date_start,
+        trunc(d.date_start,'YEAR')      as  start_of_year,
+        trunc(d.date_start,'MONTH')     as  start_of_month,
+        trunc(d.date_start,'Q')         as  start_of_quarter,
+        trunc(d.date_start,'W')         as  start_of_week
+from    sbu_date    d
+;
 
-
-select  sysdate,
-        sysdate + 1                 next_day,
-        sysdate - 1                 last_day,
-        next_day(sysdate, 'FRI')    next_friday,
-        last_day(sysdate)           end_month,
-        trunc(sysdate,'mm')         start_month,
+select  d.date_start,  
+        d.day_start + 1                         next_day,
+        d.day_start - 1                         last_day,
+        next_day(d.day_start, 'FRI')            next_friday,
+        last_day(d.day_start)                   end_month,
+        trunc(d.day_start,'mm')                 start_month,
         --
-        sysdate + interval '20' second,
-        sysdate + interval '20' minute,
-        sysdate + interval '20' hour,                   
-        sysdate + interval '5'  day,
-        sysdate + interval '2'  month,                  -- ##### Adding 1 month to 31.01.2018 will fail because 31.02.2018 does not exists!! Use add_months instead
-        sysdate + interval '1'  year,                   -- ##### Adding 1 year to 29.02.2016 will fail because 29.02.2017 does not exists!!!
+        d.date_start + interval '20' second     plus_20_seconds,
+        d.date_start + interval '20' minute     plus_20_minutes,
+        d.date_start + interval '20' hour       plus_20_hours,                   
+        d.date_start + interval '5'  day        plus_5_days,
+      --sysdate + interval '2'  month,                  -- ##### Adding 1 month to 31.01.2018 will fail because 31.02.2018 does not exists!! Use add_months instead
+      --sysdate + interval '1'  year,                   -- ##### Adding 1 year to 29.02.2016 will fail because 29.02.2017 does not exists!!!
         --
-        add_months(sysdate, 2),
-        --
-        sysdate + numToDSInterval(20, 'second')
-from    dual
-
+        add_months(d.date_start, 2)             plus_2_months,
+        add_months(d.date_start, 12)            plus_1_year
+from    sbu_date    d
+;
 
 
 -- Difference now from start of current month ----------------------------------
-select  sysdate,
-        trunc(sysdate,'mm'),
-        trunc(sysdate - trunc(sysdate,'mm'))                as diff_days,
-        trunc((sysdate - trunc(sysdate,'mm')) * 24      )   as diff_hours,
-        trunc((sysdate - trunc(sysdate,'mm')) * 1440    )   as diff_minutes,
-        trunc((sysdate - trunc(sysdate,'mm')) * 86400   )   as diff_seconds
-from    dual
+select  d.date_start,
+        d.date_end,
+        d.date_end - d.date_start                   as diff_days,
+        trunc((d.date_end - d.date_start) * 24   )  as diff_hours,
+        trunc((d.date_end - d.date_start) * 1440 )  as diff_minutes,
+        trunc((d.date_end - d.date_start) * 86400)  as diff_seconds
+from    sbu_date    d
 
-select  add_months(to_date('31.01.2018','dd.mm.yyyy'),1)
-from    dual
+
+with
+    function get_millis_between(i_from timestamp, i_to timestamp) return number is
+    begin
+        return round(
+            extract( day    from i_to - i_from) * 24 * 60 * 60 * 1000 +
+            extract( hour   from i_to - i_from)      * 60 * 60 * 1000 +
+            extract( minute from i_to - i_from)           * 60 * 1000 +
+            extract( second from i_to - i_from)                * 1000
+        );
+    end;
+    function get_seconds_between(i_from timestamp, i_to timestamp) return number is
+    begin
+        return round(
+            extract( day    from i_to - i_from) * 24 * 60 * 60 +
+            extract( hour   from i_to - i_from)      * 60 * 60 +
+            extract( minute from i_to - i_from)           * 60 +
+            extract( second from i_to - i_from)             
+        );
+    end;
+    function get_minutes_between(i_from timestamp, i_to timestamp) return number is
+    begin
+        return round(
+            extract( day    from i_to - i_from) * 24 * 60 +
+            extract( hour   from i_to - i_from)      * 60 +
+            extract( minute from i_to - i_from)          
+        );
+    end;
+    function get_hours_between(i_from timestamp, i_to timestamp) return number is
+    begin
+        return round(
+            extract( day    from i_to - i_from) * 24 +
+            extract( hour   from i_to - i_from)
+        );
+    end;
+select  d.date_start,
+        d.date_end,
+        get_millis_between(d.time_start, d.time_end)        as  millis_between,
+        get_seconds_between(d.time_start, d.time_end)       as  seconds_between,
+        get_minutes_between(d.time_start, d.time_end)       as  minutes_between,
+        get_hours_between(d.time_start, d.time_end)         as  hours_between,
+        null
+from    sbu_date    d
 ;
 
 
